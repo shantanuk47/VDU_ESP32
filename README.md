@@ -38,21 +38,22 @@ This project implements a Vehicle Display Unit using the ESP32 microcontroller p
 
 - **Platform:** ESP32
 - **Framework:** PlatformIO (ESP-IDF/Arduino, to be updated as needed)
-- **Language:** C/C++  
-  *(For the MicroPython version, see [`VDU_ESP32-microPython-`](https://github.com/shantanuk47/VDU_ESP32-microPython-))*
+- **Language:** C
 
 ## Directory Structure
 
 ```
 VDU_ESP32/
-├── config/          # Configuration headers (pin definitions, settings)
-├── lib/             # Custom libraries and hardware interfaces
-├── src/             # Main source code (if using PlatformIO)
-├── include/         # Project-wide header files
-├── test/            # Unit and integration tests
-├── README.md        # Project documentation
-├── platformio.ini   # PlatformIO build configuration
-└── ...
+├── config/ # Configuration headers (pin definitions, hardware settings)
+├── include/ # Project-wide header files (public APIs)
+├── lib/ # Custom driver libraries (I2C LCD, VDU display, etc.)
+│ ├── I2CLcd/ # I2C LCD driver (pure C)
+│ └── VDUDisplay/ # Dashboard/vehicle display logic
+├── src/ # Main source files (main.c, pins.c, serial.c, etc.)
+├── test/ # Unit and integration test cases
+├── README.md # Project overview and documentation
+├── platformio.ini # PlatformIO build and environment config
+└── .gitignore # Git version control ignores
 ```
 
 ## License
