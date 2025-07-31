@@ -24,5 +24,6 @@
 #define VDU_BTN2           14
 
 // Add more pins as required for your hardware
+void vdu_pins_init(void);
 
 #endif // VDU_PINS_H

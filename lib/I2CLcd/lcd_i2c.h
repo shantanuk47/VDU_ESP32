@@ -12,7 +12,7 @@
 #include <stdint.h>
 
 // Use your actual I2C pin config from pins.h!
-#include "config/pins.h"
+#include <pins.h>
 
 // LCD hardware config
 #define LCD_I2C_ADDR      0x27   // Use 0x3F if that's your LCD address
