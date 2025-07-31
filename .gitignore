@@ -1,3 +1,8 @@
+# PlatformIO build and dependencies
+.pio/
+.pioenvs/
+.piolibdeps/
+
 # PlatformIO
 .pio/
 .vscode/
