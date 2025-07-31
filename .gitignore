@@ -1,0 +1,30 @@
+# PlatformIO
+.pio/
+.vscode/
+.pioenvs/
+.piolibdeps/
+__pycache__/
+*.pyc
+
+# ESP-IDF build output
+build/
+*.elf
+*.bin
+*.map
+
+# VS Code files
+*.code-workspace
+*.sublime-workspace
+*.sublime-project
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+
+# Python virtual environments
+venv/
+env/
+.env/
