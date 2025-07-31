@@ -10,6 +10,7 @@ idf_component_register(
         "serial.c"
         "system_util.c"
         "dashboard.c"
+        "ver.c"
     INCLUDE_DIRS 
         "."
 )

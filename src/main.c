@@ -13,12 +13,16 @@
 #include "system_util.h"
 #include "serial.h"
 #include "dashboard.h"
+#include "ver.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
 
 void app_main(void)
 {
+    /* Print version information at startup */
+    print_version_info();
+    
     /* Print all system info (RAM, Flash, Chip, Partitions) at startup */
     system_print_all_info();
 
@@ -28,12 +32,14 @@ void app_main(void)
     /* Initialize LCD first */
     lcd_i2c_init();
 
-    /* Simple LCD test */
+    /* Simple LCD test with smart version display */
     lcd_i2c_clear();
     lcd_i2c_set_cursor(0, 0);
     lcd_i2c_print("VDU Ready");
     lcd_i2c_set_cursor(0, 1);
-    lcd_i2c_print("Press BOOT");
+    char version_buf[16];
+    get_smart_version_display_string(version_buf, sizeof(version_buf));
+    lcd_i2c_print(version_buf);
     vTaskDelay(pdMS_TO_TICKS(2000)); /* Show for 2 seconds */
 
     /* Start serial command handler (INFO etc.) */
