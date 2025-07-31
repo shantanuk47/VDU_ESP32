@@ -1,71 +1,213 @@
 
 # VDU_ESP32
 **Vehicle Display Unit (VDU) for ESP32**  
-This project implements a Vehicle Display Unit using the ESP32 microcontroller platform. The software is designed for robust, real-time vehicle data visualization and control, targeting both development boards and custom hardware.
+A comprehensive vehicle dashboard system using ESP32 with real-time multi-page display, button navigation, and simulated vehicle data. Perfect for automotive projects, vehicle monitoring, and dashboard development.
 
-## 📟 Features
+## 🚗 Features
 
-- **16x2 LCD display** via I2C
-- CAN transceiver support (e.g., MCP2551)
-- Real-time vehicle telemetry display (current, voltage, temperatures, drive mode, etc.)
-- Modular code structure for easy feature expansion
-- Hardware abstraction layer for portability
+### **Core Functionality**
+- **16x2 I2C LCD Display** - High-quality vehicle data visualization
+- **Multi-Page Dashboard** - 5 different information pages
+- **BOOT Button Navigation** - Easy page switching with built-in button
+- **Real-time Data Simulation** - Speed, odometer, RPM, temperature, fuel, trip data
+- **Responsive UI** - 10ms update rate for smooth operation
 
-## 🧰 Hardware Used
+### **Dashboard Pages**
+1. **Speed Page** - Vehicle speed (100-120 km/h) & odometer (XXXXXX.X format)
+2. **Engine Page** - RPM & engine temperature
+3. **Fuel Page** - Fuel level percentage & range
+4. **Trip Page** - Trip distance & time
+5. **Compact Page** - All key data in one view
 
-| Component       | Description              |
-|----------------|--------------------------|
-| ESP32           | Microcontroller          |
-| CJMCU-2551      | MCP2551 CAN Transceiver  |
-| 16x2 LCD (I2C)  | Display interface        |
+### **Technical Features**
+- **ESP-IDF Framework** - Professional-grade development
+- **FreeRTOS Integration** - Real-time task management
+- **I2C Communication** - Reliable LCD interface
+- **GPIO Button Handling** - Debounced button input
+- **Modular Architecture** - Easy to extend and modify
 
-## 📦 Setup Instructions
+## 🧰 Hardware Requirements
 
-1. Clone this repo:
-   ```bash
-   git clone https://github.com/shantanuk47/VDU_ESP32.git
-   cd VDU_ESP32
-   ```
-2. Open in [PlatformIO](https://platformio.org/) (VS Code recommended)
-3. Connect your ESP32 board via USB.
-4. Build and upload the firmware using PlatformIO:
-   ```bash
-   pio run --target upload
-   ```
-5. Update `platformio.ini` as needed for your ESP32 variant.
+| Component | Description | Pin Connection |
+|-----------|-------------|----------------|
+| **ESP32 Development Board** | Main microcontroller | - |
+| **16x2 I2C LCD Display** | Vehicle data display | SDA: GPIO 21, SCL: GPIO 22 |
+| **BOOT Button** | Page navigation (built-in) | GPIO 0 |
+| **USB Cable** | Power and programming | - |
 
-## Project Overview
+## 📦 Quick Start
 
-- **Platform:** ESP32
-- **Framework:** PlatformIO (ESP-IDF/Arduino, to be updated as needed)
-- **Language:** C
+### **1. Setup Environment**
+```bash
+git clone https://github.com/shantanuk47/VDU_ESP32.git
+cd VDU_ESP32
+```
 
-## Directory Structure
+### **2. Hardware Connection**
+- Connect I2C LCD to ESP32:
+  - **SDA** → GPIO 21
+  - **SCL** → GPIO 22
+  - **VCC** → 5V
+  - **GND** → GND
+
+### **3. Build & Upload**
+```bash
+# Using PlatformIO
+pio run -t upload
+
+# Monitor serial output
+pio device monitor
+```
+
+### **4. Operation**
+- **Power On**: LCD shows "VDU Ready" and "Press BOOT"
+- **Navigation**: Press BOOT button to cycle through dashboard pages
+- **Data**: Real-time simulated vehicle data updates continuously
+
+## 🎮 User Interface
+
+### **Button Controls**
+- **BOOT Button**: Navigate between dashboard pages
+- **Page Cycle**: Speed → Engine → Fuel → Trip → Compact → Speed
+
+### **Display Information**
+```
+Page 0 (Speed):    Page 1 (Engine):    Page 2 (Fuel):
+SPD:120 KMPH       RPM: 3000           FUEL: 85%
+ODO:123456.7 KM    TEMP: 95°C          RANGE: 520 KM
+
+Page 3 (Trip):     Page 4 (Compact):
+TRIP: 00111.2 KM   SPD:120 FUEL:85%
+TIME: 18:45        ODO:123456 95°C
+```
+
+## 📁 Project Structure
 
 ```
 VDU_ESP32/
-├── config/ # Configuration headers (pin definitions, hardware settings)
-├── include/ # Project-wide header files (public APIs)
-├── lib/ # Custom driver libraries (I2C LCD, VDU display, etc.)
-│ ├── I2CLcd/ # I2C LCD driver (pure C)
-│ └── VDUDisplay/ # Dashboard/vehicle display logic
-├── src/ # Main source files (main.c, pins.c, serial.c, etc.)
-├── test/ # Unit and integration test cases
-├── README.md # Project overview and documentation
-├── platformio.ini # PlatformIO build and environment config
-└── .gitignore # Git version control ignores
+├── include/                    # Header files
+│   ├── pins.h                 # Pin definitions
+│   ├── dashboard.h            # Dashboard interface
+│   └── ...
+├── lib/                       # Custom libraries
+│   ├── I2CLcd/               # I2C LCD driver
+│   │   ├── lcd_i2c.c         # LCD implementation
+│   │   └── lcd_i2c.h         # LCD interface
+│   └── VDUDisplay/           # Display logic
+│       ├── vdu_display.c     # Display functions
+│       └── vdu_display.h     # Display interface
+├── src/                       # Main source files
+│   ├── main.c                # Application entry point
+│   ├── dashboard.c           # Multi-page dashboard logic
+│   ├── pins.c                # GPIO configuration
+│   ├── serial.c              # Serial communication
+│   └── system_util.c         # System utilities
+├── platformio.ini            # Build configuration
+└── README.md                 # This file
 ```
 
-## License
+## ⚙️ Configuration
+
+### **Pin Definitions** (`include/pins.h`)
+```c
+#define VDU_LCD_I2C_SDA    21    // I2C SDA pin
+#define VDU_LCD_I2C_SCL    22    // I2C SCL pin
+#define VDU_BTN1           0     // BOOT button
+#define VDU_BTN2           13    // Future external button
+```
+
+### **LCD Configuration** (`lib/I2CLcd/lcd_i2c.h`)
+```c
+#define LCD_I2C_ADDR      0x27   // I2C address (0x27 or 0x3F)
+#define LCD_COLS          16     // Display columns
+#define LCD_ROWS          2      // Display rows
+```
+
+## 🔧 Customization
+
+### **Adding New Dashboard Pages**
+1. Add page enum in `include/dashboard.h`
+2. Implement display logic in `src/dashboard.c`
+3. Update page count and navigation
+
+### **Modifying Data Simulation**
+Edit `dashboard_update_data()` in `src/dashboard.c`:
+```c
+data->rpm = data->speed * 25;           // RPM calculation
+data->temperature = 80 + (data->speed % 20);  // Temperature
+data->fuel_level = 65 + (data->speed % 30);   // Fuel level
+```
+
+### **Changing Display Format**
+Modify `snprintf` format strings in `dashboard_show_page()`:
+```c
+snprintf(buf, sizeof(buf), "ODO:%08.1f KM  ", data->odometer);
+```
+
+## 🚀 Future Enhancements
+
+### **Planned Features**
+- **CAN Bus Integration** - Real vehicle data
+- **External Buttons** - Additional navigation options
+- **WiFi Connectivity** - Remote monitoring
+- **Data Logging** - Trip history storage
+- **Custom Sensors** - Temperature, pressure, etc.
+
+### **Integration Ready**
+- **CAN Bus**: Pins defined for MCP2551 transceiver
+- **Additional I/O**: GPIO pins available for expansion
+- **Serial Interface**: Command system for configuration
+
+## 🐛 Troubleshooting
+
+### **LCD Not Working**
+- Check I2C address (try 0x27 or 0x3F)
+- Verify wiring connections
+- Check power supply (5V required)
+
+### **Button Not Responding**
+- Ensure BOOT button is properly connected
+- Check GPIO configuration in `pins.h`
+- Monitor serial output for button events
+
+### **Build Issues**
+- Verify PlatformIO installation
+- Check ESP32 board selection
+- Ensure all dependencies are installed
+
+## 📊 Performance
+
+- **Update Rate**: 10ms (100 Hz)
+- **Memory Usage**: ~11KB RAM (3.4%)
+- **Flash Usage**: ~226KB (21.5%)
+- **CPU Frequency**: 240MHz
+- **I2C Speed**: 50kHz (stable operation)
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 📄 License
 
 This project is licensed under the MIT License.  
-See [LICENSE](LICENSE) for more details.
+See [LICENSE](LICENSE) for details.
 
-## Related Projects
+## 👨‍💻 Author
 
-- [VDU_ESP32-microPython-](https://github.com/shantanuk47/VDU_ESP32-microPython-): MicroPython-based version of this project
+**Shantanu Kumar**  
+- GitHub: [@shantanuk47](https://github.com/shantanuk47)
+- Project: [VDU_ESP32](https://github.com/shantanuk47/VDU_ESP32)
 
-## Author
+## 🔗 Related Projects
 
-Developed and maintained by [Shantanu Kumar](https://github.com/shantanuk47)
+- [VDU_ESP32-microPython](https://github.com/shantanuk47/VDU_ESP32-microPython-): MicroPython version
+- [ESP32 CAN Bus Projects](https://github.com/shantanuk47): Additional ESP32 projects
+
+---
+
+**⭐ Star this repository if you find it useful!**
 

@@ -9,7 +9,7 @@
 #include "pins.h"
 #include "driver/gpio.h"
 
-// Example: Setup for buttons (INPUT with pullup)
+/* Setup for buttons (INPUT with pullup) */
 void vdu_pins_init(void)
 {
     gpio_config_t io_conf = {0};
@@ -19,5 +19,6 @@ void vdu_pins_init(void)
     io_conf.pull_up_en = 1;
     gpio_config(&io_conf);
 
-    // If you need to setup other pins (outputs, CAN, etc.), add here.
+    /* Note: BOOT button (GPIO 0) has built-in pull-up */
+    /* External button (GPIO 13) will be configured when available */
 }

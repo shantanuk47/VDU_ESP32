@@ -12,9 +12,12 @@
 
 #include <stdint.h>
 
-// Show speed and odometer on LCD
-void vdu_show_dashboard(unsigned int speed, unsigned long odometer);
+/* Show speed and odometer on LCD */
+void vdu_show_dashboard(unsigned int speed, float odometer);
 
-// You can add more display functions here, e.g. warnings, menus, faults.
+/* Reset display cache (useful for testing or after display reset) */
+void vdu_reset_display_cache(void);
 
-#endif // VDU_DISPLAY_H
+/* You can add more display functions here, e.g. warnings, menus, faults. */
+
+#endif /* VDU_DISPLAY_H */

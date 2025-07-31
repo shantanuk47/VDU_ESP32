@@ -11,19 +11,19 @@
 
 #include <stdint.h>
 
-// I2C Pins for LCD Display (change if needed)
+/* I2C Pins for LCD Display (change if needed) */
 #define VDU_LCD_I2C_SDA    21
 #define VDU_LCD_I2C_SCL    22
 
-// CAN Bus Pins (example, edit as needed)
+/* CAN Bus Pins (example, edit as needed) */
 #define VDU_CAN_TX         5
 #define VDU_CAN_RX         4
 
-// Any additional GPIOs for buttons, relays, etc.
-#define VDU_BTN1           13
-#define VDU_BTN2           14
+/* Button Pins - Using built-in BOOT button temporarily */
+#define VDU_BTN1           0   /* Built-in BOOT button (GPIO 0) */
+#define VDU_BTN2           13  /* External button (when available) */
 
-// Add more pins as required for your hardware
+/* Add more pins as required for your hardware */
 void vdu_pins_init(void);
 
-#endif // VDU_PINS_H
+#endif /* VDU_PINS_H */
