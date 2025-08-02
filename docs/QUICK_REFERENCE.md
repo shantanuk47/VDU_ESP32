@@ -333,7 +333,6 @@ gpio_config(&new_conf);
 ### **Contact**
 - **Author**: Shantanu Kumar
 - **GitHub**: @shantanuk47
-- **Email**: support@vdu-esp32.com
 
 ---
 

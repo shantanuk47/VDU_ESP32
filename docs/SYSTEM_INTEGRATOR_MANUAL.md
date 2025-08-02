@@ -823,7 +823,6 @@ void system_diagnostics(void) {
 ### **3. Support Procedures**
 
 #### **Support Contact Information**
-- **Technical Support**: support@vdu-esp32.com
 - **Documentation**: https://github.com/shantanuk47/VDU_ESP32/docs
 - **Issue Tracking**: https://github.com/shantanuk47/VDU_ESP32/issues
 

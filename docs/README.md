@@ -159,7 +159,6 @@ If you find issues with the documentation:
 ### **Technical Support**
 For technical questions not covered in documentation:
 - **GitHub Issues**: https://github.com/shantanuk47/VDU_ESP32/issues
-- **Email**: support@vdu-esp32.com
 - **Discussions**: GitHub Discussions
 
 ### **Feature Requests**
