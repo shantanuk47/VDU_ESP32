@@ -48,9 +48,11 @@
 - **Microcontroller**: ESP32 (240MHz, 320KB RAM, 4MB Flash)
 - **Display**: 16x2 I2C LCD (HD44780 compatible)
 - **Communication**: I2C (LCD), UART (Debug), CAN (Vehicle)
+- **CAN Transceiver**: MCP2551 (500kbps)
 - **Power**: 5V/3.3V operation
 - **Operating Temperature**: -40°C to +85°C
-- **Update Rate**: 100Hz (10ms cycle)
+- **Update Rate**: 10Hz (100ms cycle)
+- **CAN Transmission**: 100ms intervals (ID 0x301)
 
 ---
 
@@ -316,61 +318,64 @@ esp_err_t vdu_config_reset(void);
 
 #### **CAN Bus Setup**
 ```c
-// can_bus.c
-#include "driver/can.h"
+// Using the CAN library (lib/CANBus/can.c)
+#include "can.h"
 
 void can_bus_init(void) {
-    can_config_t can_config = {
-        .mode = CAN_MODE_NORMAL,
-        .tx_io = (gpio_num_t)CAN_TX_PIN,
-        .rx_io = (gpio_num_t)CAN_RX_PIN,
-        .clkout_io = CAN_IO_UNUSED,
-        .bus_off_io = CAN_IO_UNUSED,
-        .tx_queue_len = 10,
-        .rx_queue_len = 10,
-        .alerts_enabled = CAN_ALERT_NONE,
-        .clkout_divider = 0
+    // Initialize with default 500kbps configuration
+    can_status_t status = can_init_default();
+    if (status != CAN_OK) {
+        ESP_LOGE("CAN", "Failed to initialize CAN bus: %d", status);
+        return;
+    }
+    
+    // Configure custom settings if needed
+    can_config_t custom_config = {
+        .baudrate = 500000,  // 500kbps
+        .loopback = false,   // Normal mode
+        .silent = false      // Transmit enabled
     };
     
-    can_timing_config_t can_timing = {
-        .brp = 2,
-        .tseg_1 = 13,
-        .tseg_2 = 2,
-        .sjw = 1,
-        .triple_sampling = false
-    };
-    
-    can_driver_install(&can_config, &can_timing, NULL);
-    can_start();
+    status = can_init(&custom_config);
+    if (status != CAN_OK) {
+        ESP_LOGE("CAN", "Failed to initialize CAN with custom config: %d", status);
+    }
 }
 ```
 
 #### **CAN Message Handling**
 ```c
-// CAN message definitions
-#define CAN_ID_SPEED        0x100
-#define CAN_ID_RPM          0x101
-#define CAN_ID_TEMP         0x102
-#define CAN_ID_FUEL         0x103
-#define CAN_ID_BATTERY      0x104
+// CAN message definitions for VDU transmission
+#define CAN_ID_VDU_DATA     0x301  // VDU vehicle data transmission
+
+// CAN message structure for ID 0x301
+typedef struct {
+    uint8_t speed;         // Vehicle speed (km/h)
+    uint8_t rpm_high;      // RPM high byte
+    uint8_t rpm_low;       // RPM low byte
+    uint8_t temperature;   // Engine temperature (°C)
+    uint8_t fuel_level;    // Fuel level (%)
+    uint8_t status;        // Status bits (engine running, etc.)
+    uint8_t checksum;      // XOR checksum
+    uint8_t reserved;      // Reserved for future use
+} vdu_can_data_t;
 
 void can_message_handler(can_message_t *message) {
-    switch (message->identifier) {
-        case CAN_ID_SPEED:
-            vehicle_data.speed = (float)(message->data[0] << 8 | message->data[1]) / 10.0;
-            break;
-        case CAN_ID_RPM:
-            vehicle_data.rpm = (float)(message->data[0] << 8 | message->data[1]);
-            break;
-        case CAN_ID_TEMP:
-            vehicle_data.temperature = message->data[0];
-            break;
-        case CAN_ID_FUEL:
-            vehicle_data.fuel_level = message->data[0];
-            break;
-        case CAN_ID_BATTERY:
-            vehicle_data.battery_voltage = (float)message->data[0] / 10.0;
-            break;
+    if (message->identifier == CAN_ID_VDU_DATA) {
+        vdu_can_data_t *data = (vdu_can_data_t*)message->data;
+        
+        // Verify checksum
+        uint8_t calculated_checksum = data->speed ^ data->rpm_high ^ 
+                                    data->rpm_low ^ data->temperature ^ 
+                                    data->fuel_level ^ data->status;
+        
+        if (calculated_checksum == data->checksum) {
+            // Update vehicle data
+            vehicle_data.speed = data->speed;
+            vehicle_data.rpm = (data->rpm_high << 8) | data->rpm_low;
+            vehicle_data.temperature = data->temperature;
+            vehicle_data.fuel_level = data->fuel_level;
+        }
     }
 }
 ```
@@ -379,23 +384,27 @@ void can_message_handler(can_message_t *message) {
 
 #### **Test Messages**
 ```c
-// Send test messages
+// Send VDU test messages
 void can_send_test_messages(void) {
     can_message_t message;
     
-    // Speed message
-    message.identifier = CAN_ID_SPEED;
-    message.data_length_code = 2;
-    message.data[0] = 0x04;  // 100 km/h
-    message.data[1] = 0x00;
-    can_transmit(&message, pdMS_TO_TICKS(100));
+    // VDU vehicle data message (ID 0x301)
+    message.identifier = CAN_ID_VDU_DATA;
+    message.data_length_code = 8;
+    message.is_extended = false;
+    message.is_remote = false;
     
-    // RPM message
-    message.identifier = CAN_ID_RPM;
-    message.data_length_code = 2;
-    message.data[0] = 0x0B;  // 2500 RPM
-    message.data[1] = 0xB8;
-    can_transmit(&message, pdMS_TO_TICKS(100));
+    // Prepare test data
+    message.data[0] = 120;  // Speed: 120 km/h
+    message.data[1] = 0x09; // RPM high: 2500 RPM
+    message.data[2] = 0xC4; // RPM low: 2500 RPM
+    message.data[3] = 95;   // Temperature: 95°C
+    message.data[4] = 75;   // Fuel level: 75%
+    message.data[5] = 0x01; // Status: engine running
+    message.data[6] = 0x5F; // Checksum (calculated)
+    message.data[7] = 0x00; // Reserved
+    
+    can_send(&message);
 }
 ```
 
@@ -410,7 +419,7 @@ void can_send_test_messages(void) {
 |-----------|---------|---------|-------|
 | ESP32 | 3.3V | 80mA | 264mW |
 | LCD Display | 5V | 50mA | 250mW |
-| CAN Transceiver | 5V | 20mA | 100mW |
+| MCP2551 CAN Transceiver | 5V | 20mA | 100mW |
 | **Total** | **-** | **150mA** | **614mW** |
 
 #### **Power Supply Design**
@@ -861,10 +870,12 @@ Contact Information:
 
 #### **Key Performance Indicators**
 - **Response Time**: < 10ms for button press
-- **Update Rate**: 100Hz display refresh
+- **Update Rate**: 10Hz display refresh (100ms cycle)
+- **CAN Transmission**: 100ms intervals (ID 0x301)
 - **Memory Usage**: < 15% of available RAM
 - **CPU Usage**: < 30% average
 - **Power Consumption**: < 1W typical
+- **CAN Speed**: 500kbps (MCP2551 transceiver)
 
 #### **Performance Monitoring**
 ```c

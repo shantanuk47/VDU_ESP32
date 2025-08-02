@@ -20,8 +20,9 @@ ESP32 Pin    →    Component
 GPIO 21      →    LCD SDA (I2C)
 GPIO 22      →    LCD SCL (I2C)
 GPIO 0       →    BOOT Button
-GPIO 13      →    External Button (future)
-5V           →    LCD VCC
+GPIO 4       →    CAN RX (MCP2551)
+GPIO 5       →    CAN TX (MCP2551)
+5V           →    LCD VCC, MCP2551 VCC
 3.3V         →    ESP32 VIN
 GND          →    Common Ground
 ```
@@ -40,10 +41,9 @@ GND          →    Common Ground
 #define VDU_BTN1           0     // BOOT button
 #define VDU_BTN2           13    // External button
 
-// Future CAN Bus
-#define VDU_CAN_TX         5
-#define VDU_CAN_RX         4
-#define VDU_CAN_STBY       2
+// CAN Bus - MCP2551 Transceiver
+#define VDU_CAN_TX         5   /* MCP2551 CTX pin */
+#define VDU_CAN_RX         4   /* MCP2551 CRX pin */
 ```
 
 ### **LCD Configuration**
@@ -86,6 +86,25 @@ lcd_i2c_init();
 lcd_i2c_clear();
 lcd_i2c_set_cursor(col, row);
 lcd_i2c_print("text");
+```
+
+### **CAN Bus API**
+```c
+// Initialize
+can_init_default();  // 500kbps default
+
+// Send message
+can_message_t msg = {
+    .id = 0x301,
+    .length = 8,
+    .is_extended = false,
+    .is_remote = false
+};
+can_send(&msg);
+
+// Receive message
+can_message_t rx_msg;
+can_receive(&rx_msg, 100);  // 100ms timeout
 ```
 
 ### **GPIO API**
@@ -239,6 +258,7 @@ void app_main(void) {
     vdu_pins_init();
     lcd_i2c_init();
     serial_init();
+    can_init_default();  // Initialize CAN bus
     dashboard_init();
     
     // 2. Main loop
@@ -252,6 +272,13 @@ void app_main(void) {
         dashboard_data.odometer = odo;
         dashboard_update_data(&dashboard_data);
         
+        // Send CAN message every 100ms
+        if (current_time - last_can_send >= 100) {
+            // Prepare and send CAN message (ID 0x301)
+            can_send(&can_msg);
+            last_can_send = current_time;
+        }
+        
         // Handle user input
         dashboard_check_buttons();
         
@@ -259,7 +286,7 @@ void app_main(void) {
         dashboard_show_page(dashboard_get_current_page(), &dashboard_data);
         
         // Wait for next cycle
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(100));  // 100ms cycle
     }
 }
 ```
@@ -272,13 +299,15 @@ void app_main(void) {
 - **CPU**: ESP32 240MHz
 - **RAM**: 320KB (11KB used - 3.4%)
 - **Flash**: 4MB (226KB used - 21.5%)
-- **Update Rate**: 100Hz (10ms cycle)
+- **Update Rate**: 10Hz (100ms cycle)
+- **CAN Transmission**: 100ms intervals
 - **Power**: ~150mA @ 5V
 
 ### **Timing**
 - **Button Response**: < 10ms
 - **Display Update**: < 5ms
-- **Main Loop**: 10ms
+- **Main Loop**: 100ms
+- **CAN Speed**: 500kbps
 - **I2C Speed**: 50kHz
 
 ---
@@ -342,12 +371,13 @@ gpio_config(&new_conf);
 - ✅ Multi-page dashboard system
 - ✅ BOOT button navigation
 - ✅ 16x2 I2C LCD display
-- ✅ Simulated vehicle data
-- ✅ 100Hz update rate
+- ✅ CAN bus integration (MCP2551)
+- ✅ Real-time CAN transmission (ID 0x301)
+- ✅ 500kbps CAN communication
 - ✅ Comprehensive documentation
 
 ### **Planned Features**
-- 🔄 CAN bus integration
+- 🔄 CAN message reception and parsing
 - 🔄 External buttons
 - 🔄 WiFi connectivity
 - 🔄 Data logging
