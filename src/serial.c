@@ -14,39 +14,65 @@
 
 #define SERIAL_PORT_NUM      UART_NUM_0
 #define SERIAL_RX_BUF_SIZE   128
+#define SERIAL_READ_SIZE     16  /* Read multiple characters at once */
+
+/* Command structure for efficient lookup */
+typedef struct {
+    const char *cmd;
+    void (*handler)(void);
+} serial_command_t;
+
+/* Command handlers */
+static void cmd_info(void) {
+    system_print_all_info();
+}
+
+/* Command lookup table */
+static const serial_command_t commands[] = {
+    {"INFO", cmd_info},
+    /* Add more commands here */
+};
+
+#define NUM_COMMANDS (sizeof(commands) / sizeof(commands[0]))
 
 /* Serial command task */
 static void serial_command_task(void *pvParameters)
 {
     char buf[SERIAL_RX_BUF_SIZE] = {0};
     int idx = 0;
+    uint8_t data[SERIAL_READ_SIZE];
+    
     while (1)
     {
-        uint8_t ch;
-        int len = uart_read_bytes(SERIAL_PORT_NUM, &ch, 1, 10 / portTICK_PERIOD_MS);
+        int len = uart_read_bytes(SERIAL_PORT_NUM, data, SERIAL_READ_SIZE, 50 / portTICK_PERIOD_MS);
         if (len > 0)
         {
-            if (ch == '\n' || ch == '\r')
-            {
-                buf[idx] = '\0';
-                if (idx > 0)
+            for (int i = 0; i < len; i++) {
+                uint8_t ch = data[i];
+                
+                if (ch == '\n' || ch == '\r')
                 {
-                    /* Command: INFO */
-                    if (strcmp(buf, "INFO") == 0)
+                    buf[idx] = '\0';
+                    if (idx > 0)
                     {
-                        system_print_all_info();
+                        /* Look up command in table */
+                        for (int j = 0; j < NUM_COMMANDS; j++) {
+                            if (strcmp(buf, commands[j].cmd) == 0) {
+                                commands[j].handler();
+                                break;
+                            }
+                        }
                     }
-                    /* Add more commands here if needed */
+                    idx = 0;
+                    buf[0] = 0;
                 }
-                idx = 0;
-                buf[0] = 0;
-            }
-            else if (idx < SERIAL_RX_BUF_SIZE - 1)
-            {
-                buf[idx++] = ch;
+                else if (idx < SERIAL_RX_BUF_SIZE - 1)
+                {
+                    buf[idx++] = ch;
+                }
             }
         }
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(5)); /* Reduced from 10ms to 5ms */
     }
 }
 

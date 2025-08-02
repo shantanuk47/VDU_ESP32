@@ -11,18 +11,25 @@
 #include "lcd_i2c.h"
 #include <stdio.h>
 
-// Show the current speed and odometer value on the LCD
-void vdu_show_dashboard(unsigned int speed, unsigned long odometer)
+/* Show the current speed and odometer value on the LCD */
+void vdu_show_dashboard(unsigned int speed, float odometer)
 {
     char buf[17];
 
-    // Line 1: Speed
+    /* Line 1: Speed */
     lcd_i2c_set_cursor(0, 0);
     snprintf(buf, sizeof(buf), "SPD:%3u KMPH    ", speed);
     lcd_i2c_print(buf);
 
-    // Line 2: Odometer
+    /* Line 2: Odometer in XXXXX.X format */
     lcd_i2c_set_cursor(0, 1);
-    snprintf(buf, sizeof(buf), "ODO:%06lu KM   ", odometer);
+    snprintf(buf, sizeof(buf), "ODO:%07.1f KM  ", odometer);
     lcd_i2c_print(buf);
+}
+
+/* Reset display cache (useful for testing or after display reset) */
+void vdu_reset_display_cache(void)
+{
+    /* Clear the display */
+    lcd_i2c_clear();
 }
