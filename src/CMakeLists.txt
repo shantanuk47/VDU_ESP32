@@ -10,7 +10,9 @@ idf_component_register(
         "serial.c"
         "system_util.c"
         "dashboard.c"
+        "date_time.c"
         "ver.c"
+        "can_comm.c"
     INCLUDE_DIRS 
         "."
 )

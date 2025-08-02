@@ -49,9 +49,6 @@ void system_print_flash_info(void)
         used += nvs_part->size;
     }
 
-    /* Free = total - used */
-    uint32_t free = (total > used) ? (total - used) : 0;
-
     printf("Flash: %u/%u bytes (%.1f%% used)\n", 
            (unsigned int)used, (unsigned int)total,
            (float)used * 100.0f / total);

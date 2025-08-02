@@ -64,6 +64,33 @@ pio device monitor
 - **Navigation**: Press BOOT button to cycle through dashboard pages
 - **Data**: Real-time simulated vehicle data updates continuously
 
+## 🖥️ Desktop Application
+
+A professional GUI application is available for easy project management:
+
+### **Features**
+- **📤 Firmware Upload** - One-click ESP32 programming
+- **📡 Serial Monitoring** - Real-time communication
+- **🕐 RTC Configuration** - Set DS3231 time with code generation
+- **📋 Log Management** - Save and view serial logs
+
+### **Quick Start**
+```bash
+# Navigate to desktop app folder
+cd VDU_Desktop_App
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run GUI application
+python VDU_Manager.py
+
+# Or build standalone executable
+./build_exe.bat
+```
+
+**📖 See `VDU_Desktop_App/README.md` for detailed instructions.**
+
 ## 🎮 User Interface
 
 ### **Button Controls**
@@ -93,11 +120,34 @@ VDU_ESP32/
 │   ├── I2CLcd/               # I2C LCD driver
 │   │   ├── lcd_i2c.c         # LCD implementation
 │   │   └── lcd_i2c.h         # LCD interface
-│   └── VDUDisplay/           # Display logic
-│       ├── vdu_display.c     # Display functions
-│       └── vdu_display.h     # Display interface
+│   ├── VDUDisplay/           # Display logic
+│   │   ├── vdu_display.c     # Display functions
+│   │   └── vdu_display.h     # Display interface
+│   ├── CANBus/               # CAN bus communication
+│   │   ├── can.c             # CAN implementation
+│   │   └── can.h             # CAN interface
+│   └── DS3231/               # RTC module
+│       ├── rtc.c             # RTC implementation
+│       └── rtc.h             # RTC interface
 ├── src/                       # Main source files
 │   ├── main.c                # Application entry point
+│   ├── dashboard.c           # Dashboard logic
+│   ├── date_time.c           # Date/time handling
+│   └── ...
+├── VDU_Desktop_App/          # Desktop GUI Application
+│   ├── VDU_Manager.py        # Main GUI application
+│   ├── build_exe.bat         # Build script for executable
+│   ├── requirements.txt      # Python dependencies
+│   ├── GUI_README.md         # Detailed GUI documentation
+│   └── README.md             # Desktop app overview
+├── docs/                     # Documentation
+│   ├── README.md             # Main project documentation
+│   ├── QUICK_REFERENCE.md    # Quick setup guide
+│   ├── SYSTEM_INTEGRATOR_MANUAL.md
+│   └── PROGRAMMER_MANUAL.md
+├── platformio.ini            # PlatformIO configuration
+└── upload.bat                # Quick upload script
+```
 │   ├── dashboard.c           # Multi-page dashboard logic
 │   ├── pins.c                # GPIO configuration
 │   ├── serial.c              # Serial communication

@@ -2,6 +2,7 @@
 #define DASHBOARD_H
 
 #include <stdint.h>
+#include "lib/DS3231/rtc.h"
 
 /* Dashboard page definitions */
 typedef enum {
@@ -10,6 +11,7 @@ typedef enum {
     DASHBOARD_PAGE_FUEL,
     DASHBOARD_PAGE_TRIP,
     DASHBOARD_PAGE_COMPACT,
+    DASHBOARD_PAGE_DATE_TIME,
     DASHBOARD_PAGE_COUNT
 } dashboard_page_t;
 
@@ -23,6 +25,7 @@ typedef struct {
     unsigned int fuel_range;
     float trip_distance;
     unsigned int trip_time;
+    rtc_time_t current_time;    /* Current date and time from RTC */
 } dashboard_data_t;
 
 /* Dashboard functions */

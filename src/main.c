@@ -14,12 +14,13 @@
 #include "serial.h"
 #include "dashboard.h"
 #include "ver.h"
-#include "can.h"
+#include "can_comm.h"
+#include "lib/DS3231/rtc.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
-#include "esp_log.h"
 
+#include "esp_log.h"
 void app_main(void)
 {
     /* Print version information at startup */
@@ -33,6 +34,9 @@ void app_main(void)
     
     /* Initialize LCD first */
     lcd_i2c_init();
+    
+    /* Wait for I2C driver to be fully ready */
+    vTaskDelay(pdMS_TO_TICKS(100));
 
     /* Simple LCD test with smart version display */
     lcd_i2c_clear();
@@ -48,12 +52,15 @@ void app_main(void)
     serial_init();
 
     /* Initialize CAN communication */
-    can_status_t can_status = can_init_default();
-    if (can_status != CAN_OK) {
+    can_comm_status_t can_status = can_comm_init();
+    if (can_status != CAN_COMM_OK) {
         ESP_LOGE("MAIN", "Failed to initialize CAN communication: %d", can_status);
     } else {
         ESP_LOGI("MAIN", "CAN communication initialized successfully");
     }
+
+    /* Initialize RTC (bypass init to avoid I2C conflicts) */
+    /* RTC will be available via serial commands only */
 
     /* Initialize dashboard */
     dashboard_init();
@@ -63,22 +70,27 @@ void app_main(void)
     unsigned int speed = 0;
     float odo = 12345.0; /* Use float for decimal odometer */
     unsigned long last_odo_update = 0;
-    const unsigned long UPDATE_INTERVAL_MS = 100; /* Update every 100ms for smooth increment */
+    const unsigned long UPDATE_INTERVAL_MS = 500; /* Update every 500ms for smooth increment */
     
-    /* CAN message timing */
+    /* Multi-rate timing system */
     unsigned long last_can_send = 0;
-    const unsigned long CAN_SEND_INTERVAL_MS = 100; /* Send CAN message every 100ms */
+    const unsigned long CAN_SEND_INTERVAL_MS = 100; /* CAN: 10 Hz (100ms) - Real-time vehicle data */
+    
+    unsigned long last_display_update = 0;
+    const unsigned long DISPLAY_UPDATE_INTERVAL_MS = 500; /* Display: 2 Hz (500ms) - Good balance, stable but responsive */
 
     printf("VDU Dashboard Ready! Press BOOT button to navigate pages.\n");
     printf("Pages: Speed -> Engine -> Fuel -> Trip -> Compact\n");
 
     while (1)
     {
+        /* Get current time for multi-rate timing */
+        unsigned long current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
+        
         /* Update speed and odometer */
         speed = 100 + (speed - 100 + 1) % 21; /* Cycle between 100-120 */
         
-        /* Update odometer based on speed */
-        unsigned long current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
+        /* Update odometer based on speed (500ms) */
         if (current_time - last_odo_update >= UPDATE_INTERVAL_MS) {
             float distance_increment = (speed * UPDATE_INTERVAL_MS) / 3600000.0;
             if (distance_increment > 0) {
@@ -92,49 +104,57 @@ void app_main(void)
         dashboard_data.odometer = odo;
         dashboard_update_data(&dashboard_data);
 
-        /* Send CAN message every 100ms */
+        /* Send CAN message every 100ms (10 Hz) */
         if (current_time - last_can_send >= CAN_SEND_INTERVAL_MS) {
-            /* Prepare CAN message data */
-            uint8_t can_data[8] = {0};
-            can_data[0] = speed;                                    /* Speed */
-            can_data[1] = (2000 + (speed * 20)) >> 8;              /* RPM high byte */
-            can_data[2] = (2000 + (speed * 20)) & 0xFF;            /* RPM low byte */
-            can_data[3] = 85 + (speed / 10);                       /* Temperature */
-            can_data[4] = 75;                                       /* Fuel level */
-            can_data[5] = 0x01;                                     /* Status bits (engine running) */
-            can_data[6] = can_data[0] ^ can_data[1] ^ can_data[2] ^ can_data[3] ^ can_data[4] ^ can_data[5]; /* Checksum */
-            can_data[7] = 0x00;                                     /* Reserved */
-            
-            /* Prepare CAN message */
-            can_message_t can_msg = {
-                .id = 0x301,
-                .length = 8,
-                .is_extended = false,
-                .is_remote = false
+            /* Prepare vehicle data */
+            vehicle_data_t vehicle_data = {
+                .speed = speed,
+                .rpm = 2000 + (speed * 20),
+                .temperature = 85 + (speed / 10),
+                .fuel_level = 75,
+                .engine_running = true,
+                .check_engine = false,
+                .low_fuel = false,
+                .door_open = false
             };
             
-            /* Copy data to CAN message */
-            for (int i = 0; i < 8; i++) {
-                can_msg.data[i] = can_data[i];
-            }
-            
-            /* Send CAN message */
-            can_status_t send_status = can_send(&can_msg);
-            if (send_status != CAN_OK) {
+            /* Send vehicle data via CAN */
+            can_comm_status_t send_status = can_comm_send_vehicle_data(&vehicle_data);
+            if (send_status != CAN_COMM_OK) {
                 ESP_LOGW("MAIN", "Failed to send CAN message: %d", send_status);
             }
             
             last_can_send = current_time;
         }
 
-        /* Check button presses */
+        /* Check button presses (10ms - 100 Hz) */
         dashboard_check_buttons();
 
-        /* Show current dashboard page */
-        dashboard_show_page(dashboard_get_current_page(), &dashboard_data);
+        /* Process received CAN messages (non-blocking) */
+        can_rx_msg_t rx_msg;
+        if (can_comm_get_received_message(&rx_msg, 0) == CAN_COMM_OK) {
+            /* Here you can add specific handling for different CAN IDs */
+            switch (rx_msg.id) {
+                case 0x100: /* Engine data */
+                    /* Update dashboard with engine data */
+                    break;
+                case 0x200: /* Vehicle status */
+                    /* Update dashboard with vehicle status */
+                    break;
+                default:
+                    /* Unknown CAN ID - just log it */
+                    break;
+            }
+        }
+
+        /* Update display every 500ms (2 Hz) */
+        if (current_time - last_display_update >= DISPLAY_UPDATE_INTERVAL_MS) {
+            dashboard_show_page(dashboard_get_current_page(), &dashboard_data);
+            last_display_update = current_time;
+        }
         
-        /* Fixed delay for stable operation */
-        vTaskDelay(pdMS_TO_TICKS(100));
+        /* System loop delay - 10ms (100 Hz) for responsive button handling */
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 

@@ -8,6 +8,7 @@
 
 #include "lcd_i2c.h"
 #include "driver/i2c.h"
+#include "pins.h"
 #include <string.h>
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
@@ -31,14 +32,22 @@ static void i2c_master_init(void)
 
     i2c_config_t conf = {
         .mode = I2C_MODE_MASTER,
-        .sda_io_num = VDU_LCD_I2C_SDA,
-        .scl_io_num = VDU_LCD_I2C_SCL,
+        .sda_io_num = VDU_I2C_SDA,
+        .scl_io_num = VDU_I2C_SCL,
         .sda_pullup_en = GPIO_PULLUP_ENABLE,
         .scl_pullup_en = GPIO_PULLUP_ENABLE,
         .master.clk_speed = 50000, /* Slower speed for compatibility */
     };
     i2c_param_config(I2C_PORT, &conf);
-    i2c_driver_install(I2C_PORT, conf.mode, 0, 0, 0);
+    esp_err_t ret = i2c_driver_install(I2C_PORT, conf.mode, 0, 0, 0);
+    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
+        printf("LCD I2C driver install failed: %s\n", esp_err_to_name(ret));
+        return;
+    } else if (ret == ESP_ERR_INVALID_STATE) {
+        printf("LCD I2C driver already installed, continuing...\n");
+    } else {
+        printf("LCD I2C driver installed successfully\n");
+    }
     i2c_initialized = true;
 }
 

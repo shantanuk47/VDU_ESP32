@@ -37,13 +37,7 @@ typedef struct {
     uint8_t reserved;      /* Reserved for future use */
 } vdu_can_data_t;
 
-/* CAN RX message structure */
-typedef struct {
-    uint32_t id;
-    uint8_t data[8];
-    uint8_t length;
-    uint32_t timestamp;
-} can_rx_msg_t;
+
 
 /* Function prototypes */
 static void can_rx_task(void *pvParameters);
@@ -65,7 +59,7 @@ can_comm_status_t can_comm_init(void)
     }
 
     /* Create queue for CAN RX messages */
-    can_rx_queue = xQueueCreate(10, sizeof(can_rx_msg_t));
+    can_rx_queue = xQueueCreate(50, sizeof(can_rx_msg_t));
     if (can_rx_queue == NULL) {
         ESP_LOGE(TAG, "Failed to create CAN RX queue");
         can_deinit();
@@ -237,17 +231,25 @@ can_comm_status_t can_comm_get_status(void)
 
 static void can_rx_task(void *pvParameters)
 {
+    can_message_t can_msg;
     can_rx_msg_t rx_msg;
     
     ESP_LOGI(TAG, "CAN RX task started");
     
     while (1) {
         /* Receive CAN message */
-        can_status_t can_status = can_receive(&rx_msg, 1000); /* 1 second timeout */
+        can_status_t can_status = can_receive(&can_msg, 1000); /* 1 second timeout */
         
         if (can_status == CAN_OK) {
-            /* Add timestamp */
+            /* Convert to our internal format */
+            rx_msg.id = can_msg.id;
+            rx_msg.length = can_msg.length;
             rx_msg.timestamp = xTaskGetTickCount() * portTICK_PERIOD_MS;
+            
+            /* Copy data */
+            for (int i = 0; i < 8; i++) {
+                rx_msg.data[i] = can_msg.data[i];
+            }
             
             /* Process the message */
             process_received_message(&rx_msg);
@@ -255,6 +257,9 @@ static void can_rx_task(void *pvParameters)
             /* Add to queue for main task */
             if (xQueueSend(can_rx_queue, &rx_msg, 0) != pdTRUE) {
                 ESP_LOGW(TAG, "CAN RX queue full, dropping message");
+                /* Log queue status for debugging */
+                UBaseType_t queue_count = uxQueueMessagesWaiting(can_rx_queue);
+                ESP_LOGW(TAG, "Queue status: %u messages waiting", queue_count);
             }
         }
         else if (can_status != CAN_ERROR_TIMEOUT) {
@@ -262,7 +267,7 @@ static void can_rx_task(void *pvParameters)
         }
         
         /* Small delay to prevent task starvation */
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(5));
     }
 }
 
@@ -277,7 +282,7 @@ static uint8_t calculate_checksum(const uint8_t *data, uint8_t length)
 
 static void process_received_message(const can_rx_msg_t *msg)
 {
-    ESP_LOGD(TAG, "Received CAN message: ID=0x%03X, Length=%d", msg->id, msg->length);
+    ESP_LOGD(TAG, "Received CAN message: ID=0x%03lX, Length=%d", msg->id, msg->length);
     
     /* Process different CAN IDs */
     switch (msg->id) {
@@ -294,7 +299,7 @@ static void process_received_message(const can_rx_msg_t *msg)
             break;
             
         default:
-            ESP_LOGD(TAG, "Unknown CAN ID: 0x%03X", msg->id);
+            ESP_LOGD(TAG, "Unknown CAN ID: 0x%03lX", msg->id);
             break;
     }
 } 

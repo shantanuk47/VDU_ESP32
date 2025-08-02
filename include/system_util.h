@@ -9,20 +9,20 @@
 #ifndef SYSTEM_UTIL_H
 #define SYSTEM_UTIL_H
 
-// Print RAM (heap) usage
+/* Print RAM (heap) usage */ 
 void system_print_ram_info(void);
 
-// Print Flash storage info
+/* Print Flash storage info */
 void system_print_flash_info(void);
 
-// Print chip/CPU info
+/* Print chip/CPU info */
 void system_print_chip_info(void);
 
-// Print Partition Table info
+/* Print Partition Table info */
 void system_print_partition_table(void);
 
-// Print all system info (calls all above)
+/* Print all system info (calls all above) */
 void system_print_all_info(void);
 
 
-#endif // SYSTEM_UTIL_H
+#endif /* SYSTEM_UTIL_H */

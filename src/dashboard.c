@@ -1,7 +1,17 @@
+/***************************************************************
+ * dashboard.c
+ * Dashboard display module for VDU_ESP32
+ * Handles multi-page display and navigation
+ * Project: VDU_ESP32 (Vehicle Display Unit)
+ * Author: Shantanu Kumar
+ * Date: 2025-07-31
+ ***************************************************************/
+
 #include "dashboard.h"
 #include "vdu_display.h"
 #include "lcd_i2c.h"
 #include "pins.h"
+#include "date_time.h"
 #include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -22,6 +32,9 @@ void dashboard_init(void)
     current_page = DASHBOARD_PAGE_SPEED;
     last_button_check = 0;
     last_btn1_state = true;
+    
+    /* Initialize date/time module */
+    date_time_init();
 }
 
 /* Update dashboard data with current values */
@@ -35,6 +48,18 @@ void dashboard_update_data(dashboard_data_t *data)
     data->fuel_range = 400 + (data->speed * 2); /* Simulate fuel range */
     data->trip_distance = data->odometer - 12345.0; /* Simulate trip distance */
     data->trip_time = (data->speed * 10) % 3600; /* Simulate trip time in seconds */
+    
+    /* Update current time from RTC */
+    esp_err_t rtc_status = ds3231_get_time(&data->current_time);
+    if (rtc_status != ESP_OK) {
+        /* If RTC read fails, use default time */
+        data->current_time.hours = 0;
+        data->current_time.minutes = 0;
+        data->current_time.seconds = 0;
+        data->current_time.date = 1;
+        data->current_time.month = 1;
+        data->current_time.year = 2025;
+    }
 }
 
 /* Show specific dashboard page */
@@ -102,6 +127,39 @@ void dashboard_show_page(dashboard_page_t page, dashboard_data_t *data)
             /* Line 2: Odo + Temp */
             lcd_i2c_set_cursor(0, 1);
             snprintf(buf, sizeof(buf), "ODO:%06.0f %2u°C", data->odometer, data->temperature);
+            lcd_i2c_print(buf);
+            break;
+            
+                        case DASHBOARD_PAGE_DATE_TIME:
+                    /* Clear LCD for Date/Time page to ensure clean display */
+                    lcd_i2c_clear();
+                    vTaskDelay(pdMS_TO_TICKS(10));
+                    
+                    /* Line 1: Date (D: DD MMM YYYY) - 16 chars max */
+            lcd_i2c_set_cursor(0, 0);
+            char month_name[4];
+            date_time_get_month_name(data->current_time.month, month_name, sizeof(month_name));
+            snprintf(buf, sizeof(buf), "D: %02u %s %04u", 
+                     data->current_time.date, month_name, data->current_time.year);
+            lcd_i2c_print(buf);
+            
+            /* Line 2: Time (T: HH:MM:SS AM/PM) - 16 chars max */
+            lcd_i2c_set_cursor(0, 1);
+            uint8_t hour_12 = data->current_time.hours;
+            const char* ampm = "AM";
+            
+            if (hour_12 == 0) {
+                hour_12 = 12;
+                ampm = "AM";
+            } else if (hour_12 == 12) {
+                ampm = "PM";
+            } else if (hour_12 > 12) {
+                hour_12 -= 12;
+                ampm = "PM";
+            }
+            
+            snprintf(buf, sizeof(buf), "T: %02u:%02u:%02u %s", 
+                     hour_12, data->current_time.minutes, data->current_time.seconds, ampm);
             lcd_i2c_print(buf);
             break;
             

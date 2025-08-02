@@ -16,7 +16,7 @@
 #include <pins.h>
 
 /* LCD hardware config */
-#define LCD_I2C_ADDR      0x27   /* Device found at 0x27 */
+#define LCD_I2C_ADDR      VDU_LCD_I2C_ADDR   /* Use address from pins.h */
 #define LCD_COLS          16
 #define LCD_ROWS          2
 
