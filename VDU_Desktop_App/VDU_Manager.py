@@ -146,16 +146,29 @@ class VDUManager:
             self.log_message("Starting firmware upload...")
             
             try:
-                result = subprocess.run(['pio', 'run', '--target', 'upload'], 
+                # Use verbose output for better debugging
+                result = subprocess.run(['pio', 'run', '--target', 'upload', '-v'], 
                                       capture_output=True, text=True, timeout=120, cwd=self.project_path)
                 
                 if result.returncode == 0:
                     self.log_message("✅ Firmware uploaded successfully!")
                     messagebox.showinfo("Success", "Firmware uploaded successfully!")
                 else:
+                    # Enhanced error handling with troubleshooting tips
                     error_msg = f"❌ Upload failed:\n{result.stderr}"
                     self.log_message(error_msg)
-                    messagebox.showerror("Error", error_msg)
+                    
+                    # Add troubleshooting tips based on common errors
+                    troubleshooting = "\n\nTroubleshooting Tips:\n"
+                    troubleshooting += "1. Make sure ESP32 is connected via USB\n"
+                    troubleshooting += "2. Try manual bootloader mode:\n"
+                    troubleshooting += "   - Hold BOOT button\n"
+                    troubleshooting += "   - Press RESET button\n"
+                    troubleshooting += "   - Release BOOT button\n"
+                    troubleshooting += "3. Check USB cable and try different USB port\n"
+                    troubleshooting += "4. Install/update USB drivers (CP210x or CH340)\n"
+                    
+                    messagebox.showerror("Upload Failed", error_msg + troubleshooting)
                     
             except subprocess.TimeoutExpired:
                 error_msg = "❌ Upload timeout - check connection"
