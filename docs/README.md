@@ -159,7 +159,6 @@ If you find issues with the documentation:
 ### **Technical Support**
 For technical questions not covered in documentation:
 - **GitHub Issues**: https://github.com/shantanuk47/VDU_ESP32/issues
-- **Email**: support@vdu-esp32.com
 - **Discussions**: GitHub Discussions
 
 ### **Feature Requests**
@@ -179,7 +178,8 @@ For new documentation or features:
 - ✅ **Hardware Integration**: 100%
 - ✅ **User Interface**: 100%
 - ✅ **Troubleshooting**: 100%
-- 🔄 **Advanced Features**: 80% (CAN bus, WiFi)
+- ✅ **CAN Bus Integration**: 100% (MCP2551, 500kbps)
+- 🔄 **Advanced Features**: 90% (WiFi, data logging)
 
 ### **Documentation Quality**
 - **Completeness**: 95%
@@ -224,7 +224,7 @@ pio run -t upload
 - ✅ Troubleshooting guides
 
 ### **Planned Updates**
-- 🔄 CAN bus integration examples
+- 🔄 CAN message reception and parsing examples
 - 🔄 WiFi connectivity guide
 - 🔄 Advanced debugging techniques
 - 🔄 Performance optimization guide

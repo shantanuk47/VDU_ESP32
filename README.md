@@ -144,19 +144,30 @@ Modify `snprintf` format strings in `dashboard_show_page()`:
 snprintf(buf, sizeof(buf), "ODO:%08.1f KM  ", data->odometer);
 ```
 
-## 🚀 Future Enhancements
+## 🚀 Current Features
 
-### **Planned Features**
-- **CAN Bus Integration** - Real vehicle data
-- **External Buttons** - Additional navigation options
-- **WiFi Connectivity** - Remote monitoring
-- **Data Logging** - Trip history storage
-- **Custom Sensors** - Temperature, pressure, etc.
+### **Implemented Features**
+- **CAN Bus Integration** - MCP2551 transceiver with 500kbps communication
+- **Real-time CAN Transmission** - Sends vehicle data (ID 0x301) every 100ms
+- **Multi-page Dashboard** - 5 different display pages with navigation
+- **Button Navigation** - Added button for page cycling (boot button temporary)
+- **Serial Command Interface** - INFO and other commands
+- **Version Management** - Smart version display system
 
-### **Integration Ready**
-- **CAN Bus**: Pins defined for MCP2551 transceiver
-- **Additional I/O**: GPIO pins available for expansion
-- **Serial Interface**: Command system for configuration
+### **Hardware Integration**
+- **CAN Bus**: MCP2551 transceiver on GPIO 4/5
+- **LCD Display**: 16x2 I2C LCD on GPIO 21/22
+- **Buttons**: BOOT button (GPIO 0) for navigation
+- **Serial Interface**: USB debugging and configuration
+
+### **Data Flow**
+```
+Vehicle CAN Bus → MCP2551 → ESP32 → LCD Display
+                ↓
+            Real-time data transmission (0x301)
+            - Speed, RPM, Temperature, Fuel Level
+            - Status bits and checksum validation
+```
 
 ## 🐛 Troubleshooting
 
@@ -177,11 +188,13 @@ snprintf(buf, sizeof(buf), "ODO:%08.1f KM  ", data->odometer);
 
 ## 📊 Performance
 
-- **Update Rate**: 10ms (100 Hz)
+- **Update Rate**: 100ms (10 Hz) - Optimized for CAN transmission
+- **CAN Transmission**: 100ms intervals (ID 0x301)
 - **Memory Usage**: ~11KB RAM (3.4%)
 - **Flash Usage**: ~226KB (21.5%)
 - **CPU Frequency**: 240MHz
 - **I2C Speed**: 50kHz (stable operation)
+- **CAN Speed**: 500kbps (MCP2551 transceiver)
 
 ## 🤝 Contributing
 
