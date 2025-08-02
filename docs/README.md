@@ -179,13 +179,16 @@ For new documentation or features:
 - ✅ **User Interface**: 100%
 - ✅ **Troubleshooting**: 100%
 - ✅ **CAN Bus Integration**: 100% (MCP2551, 500kbps)
-- 🔄 **Advanced Features**: 90% (WiFi, data logging)
+- ✅ **RTC Integration**: 100% (DS3231, date/time display)
+- ✅ **Desktop Application**: 100% (Python GUI, PyInstaller)
+- ✅ **Serial Commands**: 100% (INFO, SET_TIME, TEST)
+- 🔄 **Advanced Features**: 95% (WiFi, data logging)
 
 ### **Documentation Quality**
-- **Completeness**: 95%
+- **Completeness**: 98%
 - **Accuracy**: 100%
-- **Usability**: 95%
-- **Maintenance**: 90%
+- **Usability**: 98%
+- **Maintenance**: 95%
 
 ---
 
@@ -205,11 +208,24 @@ pio run -t upload
 **Integrate CAN Bus**
 → See [SYSTEM_INTEGRATOR_MANUAL.md](SYSTEM_INTEGRATOR_MANUAL.md) → CAN Bus Integration
 
+**Set RTC Time**
+```bash
+# Via serial monitor
+SET_TIME 2025 08 02 14 30 25
+
+# Via desktop GUI
+# Use VDU_Desktop_App/VDU_Manager.py
+```
+→ See [QUICK_REFERENCE.md](QUICK_REFERENCE.md) → Serial Commands
+
 **Troubleshoot LCD Issues**
 → See [QUICK_REFERENCE.md](QUICK_REFERENCE.md) → Common Issues
 
 **Deploy in Vehicle**
 → See [SYSTEM_INTEGRATOR_MANUAL.md](SYSTEM_INTEGRATOR_MANUAL.md) → Deployment Guide
+
+**Desktop Application**
+→ See `VDU_Desktop_App/README.md` → Desktop GUI Guide
 
 ---
 
@@ -222,6 +238,10 @@ pio run -t upload
 - ✅ Documentation index
 - ✅ Code examples and diagrams
 - ✅ Troubleshooting guides
+- ✅ RTC integration documentation
+- ✅ Desktop application documentation
+- ✅ Serial command interface documentation
+- ✅ Multi-rate system documentation
 
 ### **Planned Updates**
 - 🔄 CAN message reception and parsing examples
@@ -232,7 +252,7 @@ pio run -t upload
 
 ---
 
-**Last Updated**: August 1, 2025  
+**Last Updated**: August 2, 2025  
 **Documentation Version**: 1.0.0  
 **Firmware Version**: 1.0.0  
 **Author**: Shantanu Kumar
