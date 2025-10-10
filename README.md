@@ -310,8 +310,7 @@ Vehicle CAN Bus → MCP2551 → ESP32 → LCD Display
 
 ## 📄 License
 
-This project is licensed under the MIT License.  
-See [LICENSE](LICENSE) for details.
+You are free to use this code under a fair use policy. Please make sure to provide proper credit to the original author.
 
 ## 👨‍💻 Author
 
