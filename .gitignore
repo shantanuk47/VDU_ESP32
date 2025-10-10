@@ -17,6 +17,11 @@ build/
 *.bin
 *.map
 
+# ESP-IDF configuration files
+sdkconfig
+sdkconfig.*
+!sdkconfig.defaults
+
 # VS Code files
 *.code-workspace
 *.sublime-workspace
@@ -33,3 +38,45 @@ Thumbs.db
 venv/
 env/
 .env/
+
+# PyInstaller build files
+VDU_Desktop_App/build/
+VDU_Desktop_App/dist/
+VDU_Desktop_App/*.spec
+
+# Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Serial log files
+*.txt
+!README.txt
+!requirements.txt
+
+# PlatformIO specific
+.pio/
+.pioenvs/
+.piolibdeps/
+platformio.ini.bak
+
+# ESP32 specific
+*.partitions.bin
+*.bootloader.bin
+*.ota.bin
